@@ -3,9 +3,17 @@ package com.project.backend.controller;
 import com.project.backend.model.Prescription;
 import com.project.backend.service.PrescriptionService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
+/**
+ * PrescriptionController
+ * Quản lý các API liên quan đến đơn thuốc (Prescription).
+ * Bao gồm các chức năng: lấy danh sách đơn thuốc, tạo mới đơn thuốc.
+ */
 @RestController
 @RequestMapping("/api/prescriptions")
 public class PrescriptionController {
@@ -13,27 +21,49 @@ public class PrescriptionController {
     @Autowired
     private PrescriptionService prescriptionService;
 
-    // ✅ Endpoint test (giữ lại để check API)
-    @GetMapping("/test")
-    public String testPrescriptionAPI() {
-        return "Prescription API is working!";
+    /**
+     *  GET: Lấy tất cả đơn thuốc
+     * @return danh sách các đơn thuốc
+     */
+    @GetMapping
+    public ResponseEntity<List<Prescription>> getAllPrescriptions() {
+        List<Prescription> prescriptions = prescriptionService.getAllPrescriptions();
+        return new ResponseEntity<>(prescriptions, HttpStatus.OK);
     }
 
-    // ✅ Endpoint chính: Tạo đơn thuốc mới (POST)
+    /**
+     *  POST: Tạo (lưu) đơn thuốc mới
+     * @param token token xác thực (giả định được gửi qua header)
+     * @param prescription thông tin đơn thuốc từ request body
+     * @return Prescription vừa được lưu
+     */
     @PostMapping
     public ResponseEntity<?> createPrescription(
             @RequestHeader("Authorization") String token,
             @RequestBody Prescription prescription) {
 
         try {
-            // Gọi service để xử lý lưu đơn thuốc
-            Prescription savedPrescription = prescriptionService.savePrescription(token, prescription);
+            ////Kiểm tra token (mô phỏng xác thực)
+            if (token == null || !token.startsWith("Bearer ")) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("Missing or invalid token");
+            }
 
-            // Trả kết quả JSON về client
-            return ResponseEntity.ok(savedPrescription);
+            //// Lưu đơn thuốc qua Service
+            Prescription savedPrescription = prescriptionService.savePrescription(prescription);
+            return new ResponseEntity<>(savedPrescription, HttpStatus.CREATED);
+
         } catch (Exception e) {
-            // Nếu có lỗi -> trả lỗi hợp lệ cho client
-            return ResponseEntity.badRequest().body("Error creating prescription: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error saving prescription: " + e.getMessage());
         }
+    }
+
+    /**
+     *  GET: Kiểm tra API (để test nhanh)
+     */
+    @GetMapping("/test")
+    public String testPrescriptionAPI() {
+        return " Prescription API is working!";
     }
 }
