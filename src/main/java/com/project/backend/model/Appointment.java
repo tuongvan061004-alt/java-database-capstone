@@ -1,37 +1,101 @@
 package com.project.backend.model;
 
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Future;
+import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
+@Entity
+@Table(name = "appointments")
 public class Appointment {
-    private int appointmentId;
-    private int patientId;
-    private int doctorId;
-    private LocalDateTime appointmentDate;
-    private String status;
 
-    public Appointment() {}
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    public Appointment(int appointmentId, int patientId, int doctorId, LocalDateTime appointmentDate, String status) {
-        this.appointmentId = appointmentId;
-        this.patientId = patientId;
-        this.doctorId = doctorId;
-        this.appointmentDate = appointmentDate;
-        this.status = status;
+    // ✅ Quan hệ với Doctor (nhiều lịch hẹn có thể thuộc 1 bác sĩ)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "doctor_id", nullable = false)
+    @NotNull(message = "Doctor must not be null")
+    private Doctor doctor;
+
+    // ✅ Quan hệ với Patient (nhiều lịch hẹn có thể thuộc 1 bệnh nhân)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "patient_id", nullable = false)
+    @NotNull(message = "Patient must not be null")
+    private Patient patient;
+
+    // ✅ Thời gian hẹn, phải là thời gian trong tương lai
+    @Column(name = "appointment_time", nullable = false)
+    @NotNull(message = "Appointment time cannot be null")
+    @Future(message = "Appointment time must be in the future")
+    private LocalDateTime appointmentTime;
+
+    // ✅ Ghi chú cho lịch hẹn
+    private String notes;
+
+    // ✅ Constructors
+    public Appointment() {
     }
 
-    // Getters and setters
-    public int getAppointmentId() { return appointmentId; }
-    public void setAppointmentId(int appointmentId) { this.appointmentId = appointmentId; }
+    public Appointment(Doctor doctor, Patient patient, LocalDateTime appointmentTime, String notes) {
+        this.doctor = doctor;
+        this.patient = patient;
+        this.appointmentTime = appointmentTime;
+        this.notes = notes;
+    }
 
-    public int getPatientId() { return patientId; }
-    public void setPatientId(int patientId) { this.patientId = patientId; }
+    // ✅ Getters & Setters
+    public Long getId() {
+        return id;
+    }
 
-    public int getDoctorId() { return doctorId; }
-    public void setDoctorId(int doctorId) { this.doctorId = doctorId; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public LocalDateTime getAppointmentDate() { return appointmentDate; }
-    public void setAppointmentDate(LocalDateTime appointmentDate) { this.appointmentDate = appointmentDate; }
+    public Doctor getDoctor() {
+        return doctor;
+    }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public void setDoctor(Doctor doctor) {
+        this.doctor = doctor;
+    }
+
+    public Patient getPatient() {
+        return patient;
+    }
+
+    public void setPatient(Patient patient) {
+        this.patient = patient;
+    }
+
+    public LocalDateTime getAppointmentTime() {
+        return appointmentTime;
+    }
+
+    public void setAppointmentTime(LocalDateTime appointmentTime) {
+        this.appointmentTime = appointmentTime;
+    }
+
+    public String getNotes() {
+        return notes;
+    }
+
+    public void setNotes(String notes) {
+        this.notes = notes;
+    }
+
+    // ✅ ToString (để debug hoặc log)
+    @Override
+    public String toString() {
+        return "Appointment{" +
+                "id=" + id +
+                ", doctor=" + (doctor != null ? doctor.getId() : null) +
+                ", patient=" + (patient != null ? patient.getId() : null) +
+                ", appointmentTime=" + appointmentTime +
+                ", notes='" + notes + '\'' +
+                '}';
+    }
 }
+
