@@ -1,15 +1,33 @@
-# Step 1: Dùng image Java chính thức để build
-FROM openjdk:17-jdk-slim
+# ==============================
+# 🔧 Stage 1: Build the application
+# ==============================
+FROM maven:3.9.6-eclipse-temurin-17 AS build
 
-# Step 2: Tạo thư mục làm việc trong container
+# Set working directory
 WORKDIR /app
 
-# Step 3: Copy file jar của project vào container
-# Giả sử bạn đã build xong file jar ở target/
-COPY target/smartclinic-0.0.1-SNAPSHOT.jar app.jar
+# Copy project files
+COPY pom.xml .
+COPY src ./src
 
-# Step 4: Expose port 8080 (Spring Boot default)
+# Build the JAR file (skip tests for faster build)
+RUN mvn clean package -DskipTests
+
+
+# ==============================
+# 🚀 Stage 2: Run the application
+# ==============================
+FROM eclipse-temurin:17-jre-alpine
+
+# Set working directory inside runtime container
+WORKDIR /app
+
+# Copy only the built JAR from the build stage
+COPY --from=build /app/target/*.jar app.jar
+
+# Expose the Spring Boot default port
 EXPOSE 8080
 
-# Step 5: Lệnh chạy ứng dụng khi container khởi động
+# Run the application
 ENTRYPOINT ["java", "-jar", "app.jar"]
+
