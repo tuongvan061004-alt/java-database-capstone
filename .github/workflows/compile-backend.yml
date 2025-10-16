@@ -13,14 +13,26 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: 🧾 Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      - name: ☕ Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
+          cache: maven  # ✅ Giúp cache dependencies Maven để build nhanh hơn
 
-      - name: Build with Maven
-        run: mvn clean compile
+      - name: 📂 Navigate to backend directory (if applicable)
+        run: |
+          if [ -d "backend" ]; then cd backend; fi
+          echo "Current directory: $(pwd)"
+
+      - name: 🏗️ Build with Maven Wrapper
+        run: |
+          if [ -f "./mvnw" ]; then ./mvnw clean compile; else mvn clean compile; fi
+
+      - name: ✅ Run unit tests (optional but recommended)
+        run: |
+          if [ -f "./mvnw" ]; then ./mvnw test; else mvn test; fi
+
